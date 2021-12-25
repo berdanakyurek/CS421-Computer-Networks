@@ -36,15 +36,15 @@ def send_request(url, typ, lower = -1, upper = -1):
             if not typ:
                 #print("head shortcut")
                 return respon
-            rh = respon.split("\r\n\r\n")[0]
+            rh = respon.split("\r\n\r\n",1)[0]
             if "200 OK" not in rh and "206 Partial Content" not in rh:
                 print("problem")
                 return respon
             for i in respon.split("\r\n\r\n")[0].split("\n"):
                 if "Content-Length:" in i:
-                    expected_len = int(i.split(":")[1])
+                    expected_len = int(i.split(":", 1)[1])
                     break
-        if  "\r\n\r\n" in respon and len(respon.split("\r\n\r\n")[1]) == expected_len:
+        if  "\r\n\r\n" in respon and len(respon.split("\r\n\r\n", 1)[1]) == expected_len:
             #print("Shortcut")
             break
         try:
