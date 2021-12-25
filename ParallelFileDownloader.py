@@ -28,31 +28,43 @@ def send_request(url, typ, lower = -1, upper = -1):
     q += "\r\n"
 
     socket_to_index.send(q.encode())
-
+    expected_len = -1
     respon = ""
     get = "a"
     while(get != ""):
+        if expected_len == -1 and "\r\n\r\n" in respon:
+            if not typ:
+                #print("head shortcut")
+                return respon
+            rh = respon.split("\r\n\r\n")[0]
+            if "200 OK" not in rh and "206 Partial Content" not in rh:
+                print("problem")
+                return respon
+            for i in respon.split("\r\n\r\n")[0].split("\n"):
+                if "Content-Length:" in i:
+                    expected_len = int(i.split(":")[1])
+                    break
+        if  "\r\n\r\n" in respon and len(respon.split("\r\n\r\n")[1]) == expected_len:
+            #print("Shortcut")
+            break
         try:
             socket_to_index.settimeout(1)
             get = socket_to_index.recv(4096).decode("utf-8")
             socket_to_index.settimeout(None)
             respon += get
         except:
+            #print("Timeout")
+            #print()
             break
 
-    #if typ:
-        # print(respon)
-    #print("turanaaaaaa", len(respon))
-    #print(typ)
-    #print(respon)
     return respon
 
-def download(url, lower = -1, upper = -1):
+def download(url, lower = -1, upper = -1, tmt = 0.1):
 
     index_response = send_request(url, True, lower, upper)
 
     header = index_response.split("\r\n\r\n", 1)[0]
-    #rint(header)
+    #print(header)
 
     if "200 OK" not in header and "206 Partial Content" not in header :
         return -1
@@ -101,7 +113,7 @@ connection_count = sys.argv[2]
 ## send GET to index file
 
 
-resp = download(index_path, -1, -1)
+resp = download(index_path, -1, -1, 1)
 
 if str(resp) == "-1":
     print("Index file not found")
