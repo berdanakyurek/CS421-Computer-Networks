@@ -1,13 +1,21 @@
+# Works with Python 3.10
+
+# Berdan Akyurek
+# 21600904
+
 import sys
 import socket
 import threading
 
+# saves text to current directory
 def file_write(text, url):
     f = open(url.split("/")[-1], "w")
     f.write(text)
     f.close()
 
 # typ=True: GET, else HEAD
+# Sends a request with the type and range specified
+# returns the HTTP response
 def send_request(url, typ, lower = -1, upper = -1):
     host = url.split("/")[0]
 
@@ -53,13 +61,14 @@ def send_request(url, typ, lower = -1, upper = -1):
             socket_to_index.settimeout(None)
             respon += get
         except:
-            #print("Timeout")
-            #print()
             break
 
     return respon
 
-def download(url, lower = -1, upper = -1, tmt = 0.1):
+# Downloads a file with specified url and range
+# Returns only the content without header.
+# Returns -1 if could not downloaded
+def download(url, lower = -1, upper = -1):
 
     index_response = send_request(url, True, lower, upper)
 
@@ -71,6 +80,9 @@ def download(url, lower = -1, upper = -1, tmt = 0.1):
 
     return index_response.split("\r\n\r\n", 1)[1]
 
+# Sends a head request to HTTP server for the file
+# Returns -1 if server sends an error
+# Returns the length of the content otherwise
 def head(url):
     header_t = send_request(url, False)
     if "200 OK" not in header_t:
@@ -82,6 +94,8 @@ def head(url):
             return int(i.split(":")[1])
     return 0
 
+# Actions performed by each threads
+# Tries to download a range until being succesful
 def thread_function(url, lower, upper, thread_no, arr):
     arr[thread_no] = -1
     while arr[thread_no] == -1:
@@ -113,7 +127,7 @@ connection_count = sys.argv[2]
 ## send GET to index file
 
 
-resp = download(index_path, -1, -1, 1)
+resp = download(index_path, -1, -1)
 
 if str(resp) == "-1":
     print("Index file not found")
@@ -155,9 +169,7 @@ for url in urls:
             # bytes to download constructed here
             #print("Thread %d, %d bytes to download" %(i, bytes_to_download))
             lower = 0
-            if i == 0:
-                lower = 0
-            else:
+            if i != 0:
                 lower = upper + 1
 
             upper = lower + bytes_to_download - 1
@@ -175,7 +187,7 @@ for url in urls:
         for i in parts:
             result += i
 
-        print(len(result), url_head)
+        #print(len(result), url_head)
 
 
         file_write(result, url)
